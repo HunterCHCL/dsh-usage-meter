@@ -157,7 +157,7 @@ export class DshUsageMeterService extends TypertRemoteService {
   async deepseekBalance() {
     try {
       const subprocess = this.ctx.get('subprocess')
-      if (!subprocess) return { ok: false, error: '子进程服务不可用' }
+      if (!subprocess) return { ok: false, error: 'NO_SUBPROCESS' }
       let keyValue = null
       const credentials = this.ctx.get('credentials')
       if (credentials) {
@@ -170,11 +170,11 @@ export class DshUsageMeterService extends TypertRemoteService {
         keyValue = process.env.DEEPSEEK_API_KEY
       }
       if (keyValue === null || keyValue === '') {
-        return { ok: false, error: '未配置 DeepSeek API Key（DEEPSEEK_API_KEY）' }
+        return { ok: false, error: 'NO_API_KEY' }
       }
       const { stdout, stderr } = await this.runNode(this.balanceScript(), { DSH_BALANCE_KEY: keyValue }, 15000)
       const last = stdout.trim().split(/\r?\n/).filter(Boolean).pop()
-      if (last === undefined) return { ok: false, error: stderr.trim() || '余额请求无输出' }
+      if (last === undefined) return { ok: false, error: stderr.trim() || 'NO_OUTPUT' }
       const parsed = JSON.parse(last)
       return { ok: true, status: parsed.status, body: parsed.body }
     } catch (e) {
@@ -337,7 +337,7 @@ export class DshUsageMeterService extends TypertRemoteService {
   async setPricing(args) {
     try {
       const next = args && args.pricing
-      if (!next || typeof next !== 'object') return { ok: false, error: '配置无效' }
+      if (!next || typeof next !== 'object') return { ok: false, error: 'INVALID_CONFIG' }
       this.pricing = mergePricing(next)
       this.sessionUsageCache = {}
       await this.writeJsonFile(PRICING_PATH, this.pricing)

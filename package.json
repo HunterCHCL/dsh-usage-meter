@@ -1,7 +1,7 @@
 {
   "name": "@hunterchcl/dsh-usage-meter",
   "version": "1.1.1",
-  "description": "DeepSeek Harness 余额/用量插件，用于显示官方API下的余额、充值入口，与本会话费用，悬停查看明细，价格表与峰谷定价可配置",
+  "description": "DeepSeek Harness 余额/用量插件（Balance/Usage plugin）：显示官方 API 余额、充值入口与本会话费用，悬停查看明细，价格表与峰谷定价可配置；UI 随 DSH 语言自动切换中/英（zh/en auto-switch）。",
   "type": "module",
   "main": "host.js",
   "exports": {
@@ -40,6 +40,7 @@
       "platform": "web",
       "inject": [
         "@deepseek-ai/dsh-client-runtime",
+        "@deepseek-ai/dsh-client-locale",
         "@deepseek-ai/dsh-client-ui-slots",
         "@deepseek-ai/dsh-client-ui-settings",
         "@deepseek-ai/dsh-client-ui-conversation",
