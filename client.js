@@ -1,5 +1,5 @@
 window.__ModuleLoader__.load({
-  id: "dsh-usage-meter",
+  id: "@hunterchcl/dsh-usage-meter",
   factory: (require) => {
     var module = { exports: {} }
     var exports = module.exports
@@ -8,7 +8,7 @@ window.__ModuleLoader__.load({
     // 与宿主一致的 5 个 RPC 描述符（宽松 JSON 编解码，免编译器）
     var JSON_CODEC = { mode: "strict", typeSymbol: "json", schema: { parse: function (v) { return v } } }
     var NS = "dshUsageMeter"
-    var PKG = "dsh-usage-meter"
+    var PKG = "@hunterchcl/dsh-usage-meter"
     function direct(method, params) {
       return { id: PKG + "#" + NS + "/" + method, service: NS, namespace: NS, method: method, invocation: { kind: "direct" }, parameters: params || [], result: JSON_CODEC }
     }

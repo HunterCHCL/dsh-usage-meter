@@ -18,7 +18,7 @@ if (-not (Test-Path $DshHome)) { Write-Host "[dsh-usage-meter] DSH_HOME 不存�
 
 $profileDir = Join-Path $DshHome 'profiles\web'
 $pkgJsonPath = Join-Path $profileDir 'package.json'
-$pluginDir = Join-Path $profileDir 'node_modules\dsh-usage-meter'
+$pluginDir = Join-Path $profileDir 'node_modules\@hunterchcl\dsh-usage-meter'
 
 if (Test-Path $pkgJsonPath) {
     $stamp = Get-Date -Format 'yyyyMMdd-HHmmss'
@@ -28,7 +28,7 @@ if (Test-Path $pkgJsonPath) {
 
     $pkg = Get-Content $pkgJsonPath -Raw | ConvertFrom-Json
     if ($pkg.dsh -and $pkg.dsh.profile -and $pkg.dsh.profile.bundles) {
-        $bundles = @($pkg.dsh.profile.bundles | Where-Object { $_ -ne 'dsh-usage-meter' })
+        $bundles = @($pkg.dsh.profile.bundles | Where-Object { $_ -ne '@hunterchcl/dsh-usage-meter' })
         $pkg.dsh.profile.bundles = @($bundles)
         $json = $pkg | ConvertTo-Json -Depth 10
         [System.IO.File]::WriteAllText($pkgJsonPath, $json, (New-Object System.Text.UTF8Encoding($false)))

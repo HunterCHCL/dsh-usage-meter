@@ -1,6 +1,6 @@
 {
-  "name": "dsh-usage-meter",
-  "version": "1.1.0",
+  "name": "@hunterchcl/dsh-usage-meter",
+  "version": "1.1.1",
   "description": "DeepSeek Harness 余额/用量插件，用于显示官方API下的余额、充值入口，与本会话费用，悬停查看明细，价格表与峰谷定价可配置",
   "type": "module",
   "main": "host.js",
@@ -27,7 +27,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/HunterCHCL/dsh-usage-meter.git"
+    "url": "git+https://github.com/HunterCHCL/dsh-usage-meter.git"
   },
   "publishConfig": {
     "access": "public"

@@ -19,7 +19,7 @@ $profileDir = Join-Path $DshHome 'profiles\web'
 if (-not (Test-Path $profileDir)) { Write-Error "未找到 DSH web profile：$profileDir"; exit 1 }
 
 $pkgJsonPath = Join-Path $profileDir 'package.json'
-$pluginDir = Join-Path $profileDir 'node_modules\dsh-usage-meter'
+$pluginDir = Join-Path $profileDir 'node_modules\@hunterchcl\dsh-usage-meter'
 $srcDir = $PSScriptRoot
 
 # 1) 备份 profile 的 package.json
@@ -48,7 +48,7 @@ if (-not $pkg.dsh.profile) { $pkg.dsh | Add-Member -NotePropertyName profile -No
 if (-not $pkg.dsh.profile.bundles) { $pkg.dsh.profile | Add-Member -NotePropertyName bundles -NotePropertyValue @() -Force }
 
 $bundles = @($pkg.dsh.profile.bundles)
-if ($bundles -notcontains 'dsh-usage-meter') { $bundles += 'dsh-usage-meter' }
+if ($bundles -notcontains '@hunterchcl/dsh-usage-meter') { $bundles += '@hunterchcl/dsh-usage-meter' }
 $pkg.dsh.profile.bundles = @($bundles)
 
 $json = $pkg | ConvertTo-Json -Depth 10
