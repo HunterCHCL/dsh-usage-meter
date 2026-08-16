@@ -33,23 +33,27 @@ dsh-usage-meter/
 将这个库 git clone 到本地，然后执行其中的install.ps1脚本以安装
 ```powershell
 cd <本插件目录>
-powershell -ExecutionPolicy Bypass -File .\install.psl
+powershell -ExecutionPolicy Bypass -File .\install.ps1
 ```
 **2.使用npm进行安装：**
 
 在powershell里运行：
 ```
-dsh plugin --profile web add dsh-usage-meter
+dsh plugin --profile web add @hunterchcl/dsh-usage-meter
 ```
 需保证已安装pnpm和dsh
 
 ## 卸载
-运行脚本uninstall.psl进行卸载
+运行脚本uninstall.ps1进行卸载
 
 或者使用指令： 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\uninstall.ps1            # 保留本机数据
 powershell -ExecutionPolicy Bypass -File .\uninstall.ps1 -RemoveData # 同时删除用量/计价数据
+```
+或者使用pnpm：
+```
+dsh plugin --profile web remove @hunterchcl/dsh-usage-meter
 ```
 
 ## 说明与限制
