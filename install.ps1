@@ -58,4 +58,4 @@ Write-Host "[dsh-usage-meter] 已更新 bundles：$pkgJsonPath"
 Write-Host ''
 Write-Host '[dsh-usage-meter] 安装完成。重启 DSH web（或新开一个会话）后生效。'
 Write-Host '  卸载：运行 .\uninstall.ps1'
-Read-Host '按任意键退出...'
+Read-Host '按回车键退出...'

@@ -53,4 +53,4 @@ if ($RemoveData) {
 
 Write-Host ''
 Write-Host '[dsh-usage-meter] 卸载完成。重启 DSH web 后完全生效。'
-Read-Host ' 按任意键退出...'
+Read-Host ' 按回车键退出...'
