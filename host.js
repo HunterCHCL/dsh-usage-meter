@@ -4,7 +4,7 @@
 // 余额：DeepSeek 官方 user/balance。API Key 只通过 credentials.resolve 取用，不读取、不打印、不进入浏览器。
 import os from 'node:os'
 import path from 'node:path'
-import { TypertRemoteService } from '@deepseek-ai/dsh-typert-protocol'
+import { TypertRemoteService, Remote } from '@deepseek-ai/dsh-typert-protocol'
 
 const DSH_HOME = process.env.DSH_HOME || path.join(os.homedir(), '.dsh')
 const BALANCE_URL = 'https://api.deepseek.com/user/balance'
@@ -117,9 +117,47 @@ export class DshUsageMeterService extends TypertRemoteService {
   async start() {
     try {
       this.pricing = mergePricing(await this.readJsonFile(PRICING_PATH))
+      const typert = this.ctx.get('typert')
+      if (typert && typeof typert.register === 'function') {
+        typert.register({
+          package: 'dsh-usage-meter',
+          face: 'host',
+          schemas: [],
+          model: { services: [], events: [], objects: [] },
+          invocations: this.invocationDescriptors(),
+        })
+        console.log('[dsh-usage-meter] typert descriptors registered')
+      } else {
+        console.log('[dsh-usage-meter] typert registry unavailable')
+      }
+      console.log('[dsh-usage-meter] start ok. subprocess=' + (this.ctx.get('subprocess') ? 'yes' : 'no')
+        + ' credentials=' + (this.ctx.get('credentials') ? 'yes' : 'no')
+        + ' sessionQuery=' + (this.ctx.get('sessionQuery') ? 'yes' : 'no')
+        + ' sessions=' + (this.ctx.get('sessions') ? 'yes' : 'no'))
     } catch (e) {
       console.error('[dsh-usage-meter] start failed: ' + ((e && e.message) || e))
     }
+  }
+
+  invocationDescriptors() {
+    const json = { mode: 'strict', typeSymbol: 'json', schema: { parse: (v) => v } }
+    const direct = (method, params) => ({
+      id: 'dsh-usage-meter#dshUsageMeter/' + method,
+      service: 'dshUsageMeter',
+      namespace: 'dshUsageMeter',
+      method,
+      invocation: { kind: 'direct' },
+      parameters: params || [],
+      result: json,
+    })
+    const argsParam = () => ({ name: 'args', wire: 'args', source: 'json', codec: json })
+    return [
+      direct('deepseekBalance'),
+      direct('getUsage'),
+      direct('getSessionUsage', [argsParam()]),
+      direct('getPricing'),
+      direct('setPricing', [argsParam()]),
+    ]
   }
 
   async runNode(script, env, graceMs) {
@@ -153,21 +191,35 @@ export class DshUsageMeterService extends TypertRemoteService {
   }
 
   async deepseekBalance() {
+    console.log('[dsh-usage-meter] deepseekBalance called')
     try {
-      const credentials = this.ctx.get('credentials')
-      if (!credentials) return { ok: false, error: '凭据服务不可用' }
       const subprocess = this.ctx.get('subprocess')
-      if (!subprocess) return { ok: false, error: '子进程服务不可用' }
-      const resolved = await credentials.resolve('DEEPSEEK_API_KEY')
-      if (!resolved || typeof resolved.value !== 'string' || resolved.value === '') {
+      if (!subprocess) { console.log('[dsh-usage-meter] deepseekBalance: subprocess missing'); return { ok: false, error: '子进程服务不可用' } }
+      let keyValue = null
+      const credentials = this.ctx.get('credentials')
+      if (credentials) {
+        try {
+          const resolved = await credentials.resolve('DEEPSEEK_API_KEY')
+          if (resolved && typeof resolved.value === 'string' && resolved.value !== '') keyValue = resolved.value
+        } catch (e) {}
+      }
+      if (keyValue === null && typeof process !== 'undefined' && process.env && process.env.DEEPSEEK_API_KEY) {
+        keyValue = process.env.DEEPSEEK_API_KEY
+      }
+      if (keyValue === null || keyValue === '') {
+        console.log('[dsh-usage-meter] deepseekBalance: key missing')
         return { ok: false, error: '未配置 DeepSeek API Key（DEEPSEEK_API_KEY）' }
       }
-      const { stdout, stderr } = await this.runNode(this.balanceScript(), { DSH_BALANCE_KEY: resolved.value }, 15000)
+      const { stdout, stderr } = await this.runNode(this.balanceScript(), { DSH_BALANCE_KEY: keyValue }, 15000)
       const last = stdout.trim().split(/\r?\n/).filter(Boolean).pop()
-      if (last === undefined) return { ok: false, error: stderr.trim() || '余额请求无输出' }
+      if (last === undefined) { console.log('[dsh-usage-meter] deepseekBalance: no output, stderr=' + stderr.trim()); return { ok: false, error: stderr.trim() || '余额请求无输出' } }
       const parsed = JSON.parse(last)
+      console.log('[dsh-usage-meter] deepseekBalance ok status=' + parsed.status)
       return { ok: true, status: parsed.status, body: parsed.body }
-    } catch (e) { return { ok: false, error: String((e && e.message) || e) } }
+    } catch (e) {
+      console.error('[dsh-usage-meter] deepseekBalance error: ' + ((e && e.stack) || e))
+      return { ok: false, error: String((e && e.message) || e) }
+    }
   }
 
   /**
@@ -311,22 +363,33 @@ export class DshUsageMeterService extends TypertRemoteService {
   async getSessionUsage(args) {
     try {
       const sid = args && args.sessionId ? String(args.sessionId) : ''
+      console.log('[dsh-usage-meter] getSessionUsage called sid=' + sid)
       const sessionQuery = this.ctx.get('sessionQuery')
       let events = []
       if (sessionQuery && typeof sessionQuery.readSession === 'function') {
         try {
           const snapshot = await sessionQuery.readSession(sid)
           events = snapshot.events || []
-        } catch (e) {}
+          console.log('[dsh-usage-meter] sessionQuery.readSession events=' + events.length)
+        } catch (e) {
+          console.log('[dsh-usage-meter] sessionQuery.readSession failed: ' + ((e && e.message) || e))
+        }
+      } else {
+        console.log('[dsh-usage-meter] sessionQuery unavailable')
       }
       if (events.length === 0) {
         const sessions = this.ctx.get('sessions')
         const session = (sessions && typeof sessions.get === 'function') ? sessions.get(sid) : undefined
-        if (session && session.events) events = session.events
+        if (session && session.events) { events = session.events; console.log('[dsh-usage-meter] fallback sessions.get events=' + events.length) }
+        else console.log('[dsh-usage-meter] fallback sessions.get: no session')
       }
       const computed = this.computeSessionUsage(events)
+      console.log('[dsh-usage-meter] getSessionUsage models=' + computed.models.length + ' tokens=' + computed.totals.tokens)
       return { ok: true, sessionId: sid, models: computed.models, totals: computed.totals, pricing: this.pricing, topUpUrl: TOP_UP_URL }
-    } catch (e) { return { ok: false, error: String((e && e.message) || e) } }
+    } catch (e) {
+      console.error('[dsh-usage-meter] getSessionUsage error: ' + ((e && e.stack) || e))
+      return { ok: false, error: String((e && e.message) || e) }
+    }
   }
 
   async getPricing() {
@@ -342,6 +405,19 @@ export class DshUsageMeterService extends TypertRemoteService {
       return { ok: true, pricing: this.pricing }
     } catch (e) { return { ok: false, error: String((e && e.message) || e) } }
   }
+}
+
+// 手动调用 Remote 装饰器函数给实例方法打标，使 gateway 的 SRC fallback
+// 能发现这些方法（Node 不支持装饰器语法，只能手动模拟 decorator context）。
+const DshUsageMeterServiceProto = DshUsageMeterService.prototype
+const REMOTE_METHODS = ['deepseekBalance', 'getUsage', 'getSessionUsage', 'getPricing', 'setPricing']
+for (const method of REMOTE_METHODS) {
+  Remote(DshUsageMeterServiceProto[method], {
+    private: false,
+    static: false,
+    name: method,
+    addInitializer(fn) { fn.call(Object.create(DshUsageMeterServiceProto)) },
+  })
 }
 
 export function apply(ctx) {
