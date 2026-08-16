@@ -8,10 +8,12 @@
 
 - 会话顶部提示：
   - 余额：调用 DeepSeek 官方 `GET https://api.deepseek.com/user/balance`；非官方 API / 未配置 Key / 查询失败时余额会隐藏。
-  - 本会话：显示当前 session 已使用额度（人民币，两位小数）。鼠标悬停显示明细。UI具体：
-![alt text](image.png)
+  - 本会话：显示当前 session 已使用额度（人民币，两位小数）。鼠标悬停显示明细。UI具体：<img width="577" height="321" alt="image" src="https://github.com/user-attachments/assets/119c5da4-76db-4655-a26e-9a4ed08d1e2f" />
+
 - 设置页「余额 / 用量」：余额详情、以及 **计价设置**：
   - 有峰谷定价开关，在打开开关时会按照峰谷定价的时间对每一次请求进行计算，能得到准确的金额数据，即使这次对话跨越了峰谷时段
+  - <img width="584" height="326" alt="image" src="https://github.com/user-attachments/assets/8aaa7332-59f7-409d-9081-f14a6b4a17c1" />
+  (与上文是同一段对话，但打开了峰谷开关。这段对话单纯使用峰或谷的定价计算都是不对的，因为该对话跨越了峰谷)
   - 用量按 **请求发生时刻** 所在时段计价；暂时只支持官方API，未匹配的模型只显示 token 数，不计金额。
 
 ## 目录
@@ -50,6 +52,10 @@ dsh plugin --profile web add @hunterchcl/dsh-usage-meter
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\uninstall.ps1            # 保留本机数据
 powershell -ExecutionPolicy Bypass -File .\uninstall.ps1 -RemoveData # 同时删除用量/计价数据
+```
+或者使用pnpm：
+```
+dsh plugin --profile web remove @hunterchcl/dsh-usage-meter
 ```
 
 ## 说明与限制
