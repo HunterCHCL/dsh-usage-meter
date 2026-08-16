@@ -269,7 +269,7 @@ export class DshUsageMeterService extends TypertRemoteService {
           const pb = lastStep.peak ? prevModelBuckets.peak : prevModelBuckets.offpeak
           pb.hit -= lastStep.hit
           pb.miss -= lastStep.miss
-          pb.output -= lastStep.output
+          pb.output -= lastStep.out
           pb.count -= 1
         }
       }
@@ -364,9 +364,18 @@ export class DshUsageMeterService extends TypertRemoteService {
     try {
       const sid = args && args.sessionId ? String(args.sessionId) : ''
       console.log('[dsh-usage-meter] getSessionUsage called sid=' + sid)
+      const sessions = this.ctx.get('sessions')
       const sessionQuery = this.ctx.get('sessionQuery')
       let events = []
-      if (sessionQuery && typeof sessionQuery.readSession === 'function') {
+      // 优先读内存中的 live session：直接取事件数组，无深拷贝 / replay 校验 / 深冻结，开销极小。
+      // 只有非 live（已关闭 / 持久化）会话才走 readSession（昂贵：整段 replay 校验 + 深拷贝）。
+      // 之前每 3 秒轮询都走 readSession，AI 流式回复时会话事件快速增长，
+      // 同步重操作把主进程事件循环堵死，导致发送消息后卡死。
+      const live = (sessions && typeof sessions.get === 'function') ? sessions.get(sid) : undefined
+      if (live && live.events) {
+        events = live.events
+        console.log('[dsh-usage-meter] live sessions.get events=' + events.length)
+      } else if (sessionQuery && typeof sessionQuery.readSession === 'function') {
         try {
           const snapshot = await sessionQuery.readSession(sid)
           events = snapshot.events || []
@@ -377,13 +386,10 @@ export class DshUsageMeterService extends TypertRemoteService {
       } else {
         console.log('[dsh-usage-meter] sessionQuery unavailable')
       }
-      if (events.length === 0) {
-        const sessions = this.ctx.get('sessions')
-        const session = (sessions && typeof sessions.get === 'function') ? sessions.get(sid) : undefined
-        if (session && session.events) { events = session.events; console.log('[dsh-usage-meter] fallback sessions.get events=' + events.length) }
-        else console.log('[dsh-usage-meter] fallback sessions.get: no session')
-      }
       const computed = this.computeSessionUsage(events)
+      if (computed.models.length > 0) {
+        console.log('[dsh-usage-meter] getSessionUsage result models[0]=' + JSON.stringify(computed.models[0]) + ' totals=' + JSON.stringify(computed.totals))
+      }
       console.log('[dsh-usage-meter] getSessionUsage models=' + computed.models.length + ' tokens=' + computed.totals.tokens)
       return { ok: true, sessionId: sid, models: computed.models, totals: computed.totals, pricing: this.pricing, topUpUrl: TOP_UP_URL }
     } catch (e) {

@@ -106,16 +106,19 @@ window.__ModuleLoader__.load({
           } else setBalance(null)
         }).catch(function () { setBalance(null) })
       }
+      var loadingRef = React.useRef(false)
       function loadUsage() {
-        if (!sessionId) return
+        if (!sessionId || loadingRef.current) return
+        loadingRef.current = true
         callHost("getSessionUsage", { sessionId: sessionId }).then(function (res) {
           setUsage((res && res.ok) ? res : null)
-        }).catch(function () { setUsage(null) })
+          loadingRef.current = false
+        }).catch(function () { setUsage(null); loadingRef.current = false })
       }
       React.useEffect(function () {
         loadBalance()
         loadUsage()
-        var timer = setInterval(loadUsage, 3000)
+        var timer = setInterval(loadUsage, 5000)
         return function () { clearInterval(timer) }
       }, [sessionId])
 
