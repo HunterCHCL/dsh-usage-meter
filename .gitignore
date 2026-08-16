@@ -1,0 +1,8 @@
+
+PWSH-Cur.bat
+
+# Node / npm
+node_modules/
+*.tgz
+npm-debug.log*
+
