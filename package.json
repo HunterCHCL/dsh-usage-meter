@@ -1,7 +1,7 @@
 {
   "name": "@hunterchcl/dsh-usage-meter",
-  "version": "1.1.1",
-  "description": "DeepSeek Harness 余额/用量插件（Balance/Usage plugin）：显示官方 API 余额、充值入口与本会话费用，悬停查看明细，价格表与峰谷定价可配置；UI 随 DSH 语言自动切换中/英（zh/en auto-switch）。",
+  "version": "1.2.0",
+  "description": "DeepSeek Harness Balance/Usage plugin: Usage and balance meter for DeepSeek Harness (DSH), providing real-time usage statistics and balance information.",
   "type": "module",
   "main": "host.js",
   "exports": {
