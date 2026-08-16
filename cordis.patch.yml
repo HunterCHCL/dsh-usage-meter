@@ -1,0 +1,9 @@
+# dsh-usage-meter bundle patch
+#
+# 这是 `dsh.bundle.patch` 声明的 patch 层：当本插件被加入 profile 的
+# `dsh.profile.bundles` 后，profile 启动时会合并本 patch —— 向空的插件
+# 入口列表插入一行，把 `dsh-usage-meter` 挂载为 Cordis 插件（其 index.js
+# 通过 dynamicCordisRunner 在每个会话创建时注入 host-body.js + client-body.js）。
+- insert:
+    - id: dsh-usage-meter
+      name: 'dsh-usage-meter'

@@ -1,0 +1,13 @@
+{
+  "name": "dsh-usage-meter",
+  "version": "1.0.0",
+  "description": "DeepSeek Harness 余额/用量插件：顶部显示官方余额（含充值入口）与本会话费用，悬停查看 模型 × 输入(命中/未命中缓存)/输出 明细；价格表与峰谷定价可配置。",
+  "type": "module",
+  "main": "index.js",
+  "license": "MIT",
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}
