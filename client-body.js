@@ -7,6 +7,7 @@ function el(tag, props) {
 
 var BLUE = '#4d6bfe'
 var TOP_UP_URL = 'https://platform.deepseek.com/top_up'
+var timerApi = null
 
 var CSS = [
   // 页面通用
@@ -92,8 +93,11 @@ function TopUsageWidget(props) {
   React.useEffect(function () {
     loadBalance()
     loadUsage()
-    var timer = setInterval(loadUsage, 3000)
-    return function () { clearInterval(timer) }
+    var dispose = null
+    if (timerApi) {
+      dispose = timerApi(function () { loadUsage() }, 3000)
+    }
+    return function () { if (dispose) dispose() }
   }, [sessionId])
 
   var cny = null
@@ -389,9 +393,11 @@ function BalanceSection() {
 }
 
 return {
+  inject: ['timer'],
   apply(ctx) {
     var slots = ctx.get('slots')
     if (slots === undefined) return
+    if (timerApi === null && ctx.interval !== undefined) timerApi = ctx.interval.bind(ctx)
     styles.insert(CSS)
 
     // 会话顶部：余额 + 本会话用量
