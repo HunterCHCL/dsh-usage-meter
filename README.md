@@ -1,6 +1,8 @@
 # dsh-usage-meter
 
-DeepSeek Harness（DSH）插件：在界面上方显示 **DeepSeek 官方余额**（含充值入口）和 **本会话已使用额度**；鼠标悬停额度可查看按 **模型 × 输入(命中缓存) / 输入(未命中缓存) / 输出** 细分的 token 数与人民币金额（精确到分）。价格表与峰谷定价可在设置页配置。
+DeepSeek Harness（DSH）**静态 bundle 插件**：在界面上方显示 **DeepSeek 官方余额**（含充值入口）和 **本会话已使用额度**；鼠标悬停额度可查看按 **模型 × 输入(命中缓存) / 输入(未命中缓存) / 输出** 细分的 token 数与人民币金额（精确到分）。价格表与峰谷定价可在设置页配置。
+
+> v1.1.0 起改为静态 bundle（宿主 ESM + `dsh.client` 静态客户端），**不再使用 dynamicCordisRunner，因此打开新对话无需逐会话审批，也不会给 AI 注入 cordis 运行日志。**
 
 ## 功能
 
@@ -29,11 +31,10 @@ DeepSeek Harness（DSH）插件：在界面上方显示 **DeepSeek 官方余额*
 
 ```
 dsh-usage-meter/
-  package.json     插件包声明（bundle 入口 index.js + dsh.bundle.patch）
-  cordis.patch.yml bundle patch 层：把本插件挂载为 Cordis 插件行
-  index.js         宿主引导：监听 agent/created，用 dynamicCordisRunner 注入代码
-  host-body.js     宿主动态代码：余额查询 + llm/stream 用量计量 + 计价 RPC
-  client-body.js   客户端动态代码：顶部胶囊 + 设置页
+  package.json     插件包声明（dsh.bundle.patch + dsh.client）
+  cordis.patch.yml bundle patch：把本插件挂载为 Cordis 宿主插件
+  host.js          宿主 ESM：TypertRemoteService RPC（余额/用量/计价）
+  client.js        客户端静态模块：顶部胶囊 + 设置页
   install.ps1      一键安装
   uninstall.ps1    一键卸载
   README.md
@@ -49,10 +50,10 @@ powershell -ExecutionPolicy Bypass -File .\install.ps1
 脚本会：
 1. 自动定位 DSH_HOME（`$env:DSH_HOME`，默认 `~\.dsh`）；
 2. 备份 `profiles\web\package.json`；
-3. 把插件复制到 `profiles\web\node_modules\dsh-usage-meter\`；
+3. 把 `package.json`、`cordis.patch.yml`、`host.js`、`client.js` 复制到 `profiles\web\node_modules\dsh-usage-meter\`；
 4. 在 `profiles\web\package.json` 的 `dsh.profile.bundles` 中加入 `dsh-usage-meter`。
 
-**生效方式**：重启 DSH web（或新开一个会话）。当前会话顶部是每个 session 独立加载的，新会话即可看到。
+**生效方式**：重启 DSH web。静态 bundle 在 profile 启动时挂载，打开新对话无需审批。
 
 ## 卸载
 
@@ -68,6 +69,6 @@ powershell -ExecutionPolicy Bypass -File .\uninstall.ps1 -RemoveData # 同时删
 
 ## 说明与限制
 
-- 用量为本地估算（基于 `llm/stream` 的 usage 块），仅供参考，非平台账单；以 DeepSeek 开放平台为准。
-- 插件统计从本插件被加载到该会话之后开始累计；历史会话在插件安装前发生的请求不计入。
+- 用量为本地统计（基于 DSH session 事件日志中持久化的 usage 记录：`assistant/chunk` 与 `assistant/message`），仅供参考，非平台账单；以 DeepSeek 开放平台为准。
+- 打开会话即可计算该会话完整历史用量（包括安装本插件之前的记录），按请求发生时刻的峰谷时段计价。
 - 若以后在 profile 目录手动运行 `pnpm install`，可能会清理未在 `dependencies` 中声明的本地插件目录；如遇此情况请重新运行 `install.ps1`。

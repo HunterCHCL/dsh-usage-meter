@@ -36,7 +36,7 @@ if (Test-Path $pluginDir) {
     Remove-Item $pluginDir -Recurse -Force
 }
 New-Item -ItemType Directory -Force -Path $pluginDir | Out-Null
-foreach ($f in @('package.json', 'index.js', 'host-body.js', 'client-body.js', 'cordis.patch.yml')) {
+foreach ($f in @('package.json', 'host.js', 'client.js', 'cordis.patch.yml')) {
     Copy-Item (Join-Path $srcDir $f) (Join-Path $pluginDir $f) -Force
 }
 Write-Host "[dsh-usage-meter] 已复制插件到 $pluginDir"
@@ -58,3 +58,4 @@ Write-Host "[dsh-usage-meter] 已更新 bundles：$pkgJsonPath"
 Write-Host ''
 Write-Host '[dsh-usage-meter] 安装完成。重启 DSH web（或新开一个会话）后生效。'
 Write-Host '  卸载：运行 .\uninstall.ps1'
+Read-Host '按任意键退出...'
