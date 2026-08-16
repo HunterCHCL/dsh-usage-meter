@@ -295,32 +295,6 @@ export class DshUsageMeterService extends TypertRemoteService {
     return { models, totals }
   }
 
-  async getUsage() {
-    try {
-      const sessions = this.ctx.get('sessions')
-      const sessionQuery = this.ctx.get('sessionQuery')
-      let totalTokens = 0
-      let sessionCount = 0
-      if (sessions && typeof sessions.list === 'function') {
-        const list = sessions.list()
-        for (let i = 0; i < list.length; i++) {
-          totalTokens += this.computeSessionUsage(list[i].events).totals.tokens
-          sessionCount++
-        }
-      } else if (sessionQuery && typeof sessionQuery.listSessions === 'function') {
-        const records = await sessionQuery.listSessions()
-        sessionCount = records.length
-        for (let i = 0; i < records.length; i++) {
-          try {
-            const snapshot = await sessionQuery.readSession(records[i].id)
-            totalTokens += this.computeSessionUsage(snapshot.events).totals.tokens
-          } catch (e) {}
-        }
-      }
-      return { ok: true, currentTokens: totalTokens, totalTokens, sessionCount }
-    } catch (e) { return { ok: false, error: String((e && e.message) || e) } }
-  }
-
   async getSessionUsage(args) {
     try {
       const sid = args && args.sessionId ? String(args.sessionId) : ''
@@ -375,7 +349,7 @@ export class DshUsageMeterService extends TypertRemoteService {
 // 手动调用 Remote 装饰器函数给实例方法打标，使 gateway 的 SRC fallback
 // 能发现这些方法（Node 不支持装饰器语法，只能手动模拟 decorator context）。
 const DshUsageMeterServiceProto = DshUsageMeterService.prototype
-const REMOTE_METHODS = ['deepseekBalance', 'getUsage', 'getSessionUsage', 'getPricing', 'setPricing']
+const REMOTE_METHODS = ['deepseekBalance', 'getSessionUsage', 'getPricing', 'setPricing']
 for (const method of REMOTE_METHODS) {
   Remote(DshUsageMeterServiceProto[method], {
     private: false,

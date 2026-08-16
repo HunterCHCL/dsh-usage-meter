@@ -14,7 +14,7 @@ window.__ModuleLoader__.load({
     }
     function argsParam() { return { name: "args", wire: "args", source: "json", codec: JSON_CODEC } }
     var DESCRIPTORS = [
-      direct("deepseekBalance"), direct("getUsage"), direct("getSessionUsage", [argsParam()]),
+      direct("deepseekBalance"), direct("getSessionUsage", [argsParam()]),
       direct("getPricing"), direct("setPricing", [argsParam()])
     ]
 
@@ -354,9 +354,6 @@ window.__ModuleLoader__.load({
       var p = React.useState({ status: "idle" })
       var state = p[0]
       var setState = p[1]
-      var up = React.useState(null)
-      var usage = up[0]
-      var setUsage = up[1]
       function load() {
         setState({ status: "loading" })
         callHost("deepseekBalance").then(function (res) {
@@ -370,9 +367,6 @@ window.__ModuleLoader__.load({
         }).catch(function (e) {
           setState({ status: "error", error: String((e && e.message) || e) })
         })
-        callHost("getUsage").then(function (res) {
-          setUsage((res && res.ok) ? res : null)
-        }).catch(function () { setUsage(null) })
       }
       React.useEffect(function () { load() }, [])
 
@@ -401,14 +395,6 @@ window.__ModuleLoader__.load({
           el("h2", { className: "dsh-h2" }, "DeepSeek 余额"),
           el("button", { className: "dsh-btn ghost", onClick: load }, "刷新")),
         body,
-        el("div", { className: "dsh-card" },
-          el("div", { className: "dsh-h2", style: { marginBottom: "8px" } }, "本机 token 用量"),
-          usage ? el("div", {},
-            el("div", { className: "dsh-row" }, el("span", { className: "dsh-label" }, "本机 token 总量"), el("span", { className: "dsh-value" }, usage.totalTokens)),
-            el("div", { className: "dsh-row" }, el("span", { className: "dsh-label" }, "会话数"), el("span", { className: "dsh-value" }, usage.sessionCount)))
-            : el("div", { className: "dsh-muted" }, "暂无数据"),
-          el("div", { className: "dsh-note", style: { marginTop: "8px" } }, "· 用量为本地估算值，仅供参考，非平台账单；以 DeepSeek 开放平台为准。"),
-          el("div", { className: "dsh-note" }, "· 顶部胶囊显示「本会话」金额，鼠标悬停可查看 模型 × 命中/未命中/输出 明细。")),
         el(PricingEditor),
         el("div", { className: "dsh-muted" }, "余额来自 DeepSeek 开放平台 user/balance 接口；仅官方 API 显示余额与充值入口。"))
     }
