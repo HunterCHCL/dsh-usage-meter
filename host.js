@@ -113,7 +113,9 @@ export class DshUsageMeterService extends TypertRemoteService {
     this.ctx = ctx
     this.pricing = defaultPricing()
     this.sessionUsageCache = {}
-    void this.start()
+    // 保存初始化 Promise：getPricing / getSessionUsage 会先 await 它，
+    // 避免「启动后立刻打开设置页」读到尚未加载的默认定价（峰谷开关被误判为关闭）。
+    this.loadPromise = this.start()
   }
 
   async start() {
@@ -297,6 +299,7 @@ export class DshUsageMeterService extends TypertRemoteService {
 
   async getSessionUsage(args) {
     try {
+      if (this.loadPromise) await this.loadPromise
       const sid = args && args.sessionId ? String(args.sessionId) : ''
       const sessions = this.ctx.get('sessions')
       const sessionQuery = this.ctx.get('sessionQuery')
@@ -331,7 +334,10 @@ export class DshUsageMeterService extends TypertRemoteService {
   }
 
   async getPricing() {
-    try { return { ok: true, pricing: this.pricing } } catch (e) { return { ok: false, error: String((e && e.message) || e) } }
+    try {
+      if (this.loadPromise) await this.loadPromise
+      return { ok: true, pricing: this.pricing }
+    } catch (e) { return { ok: false, error: String((e && e.message) || e) } }
   }
 
   async setPricing(args) {
@@ -358,6 +364,11 @@ for (const method of REMOTE_METHODS) {
     addInitializer(fn) { fn.call(Object.create(DshUsageMeterServiceProto)) },
   })
 }
+
+// 声明依赖 subprocess 服务：宿主插件构造时该服务可能尚未注册，若不在 inject 中声明，
+// start() 读计价文件会因 subprocess 不可用而静默失败（runNode 返回空），导致重启后
+// 设置回退默认。声明后 Cordis 会等 subprocess 就绪再调用 apply，start() 才能读到文件。
+export const inject = ['subprocess']
 
 export function apply(ctx) {
   try {
