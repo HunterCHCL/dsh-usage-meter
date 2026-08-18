@@ -1,6 +1,6 @@
 {
   "name": "@hunterchcl/dsh-usage-meter",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "DeepSeek Harness Balance/Usage plugin: Usage and balance meter for DeepSeek Harness (DSH), providing real-time usage statistics and balance information.",
   "type": "module",
   "main": "host.js",

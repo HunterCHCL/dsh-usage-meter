@@ -241,8 +241,10 @@ window.__ModuleLoader__.load({
       React.useEffect(function () {
         loadBalance()
         loadUsage()
-        var timer = setInterval(loadUsage, 5000)
-        return function () { clearInterval(timer) }
+        var usageTimer = setInterval(loadUsage, 5000)
+        // 余额来自 DeepSeek 官方接口，刷新频率放低一些，避免频繁请求被限流
+        var balanceTimer = setInterval(loadBalance, 60000)
+        return function () { clearInterval(usageTimer); clearInterval(balanceTimer) }
       }, [sessionId])
 
       var cny = null
